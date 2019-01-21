@@ -71,7 +71,7 @@ class Backup(object):
 
     def _precheck(self):
         if self.token:
-            print('载入{1}的本地登录信息{0}'.format(
+            print(u'载入{1}的本地登录信息{0}'.format(
                 self.token['oauth_token'], self.username))
             self.api.set_oauth_token(self.token)
         if self.auth_mode:
@@ -81,16 +81,16 @@ class Backup(object):
             else:
                 self.token = self.api.login(self.username, self.password)
                 self.user = self.api.user
-                print('保存{1}的登录信息{0}'.format(
+                print(u'保存{1}的登录信息{0}'.format(
                     self.token['oauth_token'], self.username))
                 utils.save_account_info(self.username, self.token)
         if not self.target and not self.user:
-            print('没有指定备份的目标用户')
+            print(u'没有指定备份的目标用户')
             return
         self.target_id = self.target or self.user['id']
 
     def stop(self):
-        print('收到终止备份的命令，即将停止...')
+        print(u'收到终止备份的命令，即将停止...')
         self.cancelled = True
 
     def start(self):
@@ -101,69 +101,69 @@ class Backup(object):
             self.target_user = self.api.get_user(self.target_id)
         except ApiError, e:
             if e.args[0] == 404:
-                print('你指定的用户{0}不存在'.format(self.target_id))
+                print(u'你指定的用户{0}不存在'.format(self.target_id))
             self.target_user = None
         if not self.target_user:
             print(
-                '无法获取用户{0}的信息'.format(self.target_id))
+                u'无法获取用户{0}的信息'.format(self.target_id))
             return
-        print('用户{0}共有{1}条消息，{2}个好友'.format(
+        print(u'用户{0}共有{1}条消息，{2}个好友'.format(
             self.target_user['id'],
             self.target_user['statuses_count'],
             self.target_user['friends_count']))
         if not os.path.exists(self.output):
             os.mkdir(self.output)
-        print('开始备份用户{0}的消息...'.format(self.target_id))
+        print(u'开始备份用户{0}的消息...'.format(self.target_id))
         db_file = os.path.abspath(
-            '{0}/{1}.db'.format(self.output, self.target_id))
-        print('保存路径：{0}'.format(self.output))
+            u'{0}/{1}.db'.format(self.output, self.target_id))
+        print(u'保存路径：{0}'.format(self.output))
         self.db = DB(db_file)
         db_count = self.db.get_status_count()
         if db_count:
-            print('发现数据库已备份消息{0}条'.format(db_count))
+            print(u'发现数据库已备份消息{0}条'.format(db_count))
         # first ,check new statuses
         self._fetch_newer_statuses()
         # then, check older status
         self._fetch_older_statuses()
         if self.include_photo:
             # check user photos
-            print('开始备份用户{0}的相册照片...'.format(self.target_id))
+            print(u'开始备份用户{0}的相册照片...'.format(self.target_id))
             start = time.time()
             self._fetch_photos_multi()
             elasped = time.time()-start
-            print('备份用户{0}的照片共耗时{1}秒'.format(self.target_id, elasped))
+            print(u'备份用户{0}的照片共耗时{1}秒'.format(self.target_id, elasped))
         if self.include_user:
             # check user followings
-            print('开始备份用户{0}的好友资料...'.format(self.target_id))
+            print(u'开始备份用户{0}的好友资料...'.format(self.target_id))
             self._fetch_followings()
         self._render_statuses()
         self._report()
         if self.cancelled:
-            print('本次备份已终止')
+            print(u'本次备份已终止')
         else:
-            print('本次备份已完成')
+            print(u'本次备份已完成')
         self.db.close()
 
     def _report(self):
-        print('本次共备份了{1}的{0}条消息'.format(
+        print(u'本次共备份了{1}的{0}条消息'.format(
             self.total, self.target_id))
-        print('本次共备份了{1}的{0}张照片'.format(
+        print(u'本次共备份了{1}的{0}张照片'.format(
             self.photo_total, self.target_id))
-        print('本次共备份了{1}的{0}个好友'.format(
+        print(u'本次共备份了{1}的{0}个好友'.format(
             self.user_total, self.target_id))
 
     def _render_statuses(self):
         db_data = self.db.get_all_status()
         if db_data:
             data = []
-            print('开始读取{0}的消息列表数据...'.format(self.target_id))
+            print(u'开始读取{0}的消息列表数据...'.format(self.target_id))
             for dt in db_data:
                 data.append(json.loads(dt['data']))
             fileOut = os.path.join(
                 self.output, self.target_id)
-            print('开始导出{0}的消息列表为Html/Markdown/Txt...'.format(self.target_id))
+            print(u'开始导出{0}的消息列表为Html/Markdown/Txt...'.format(self.target_id))
             renderer.render(data, fileOut)
-            print('已导出文件', fileOut+'.html|.md|.txt')
+            print(u'已导出文件', fileOut+'.html|.md|.txt')
 
     def _fetch_followings(self):
         '''全量更新，获取全部好友数据'''
@@ -173,7 +173,7 @@ class Backup(object):
             if not users:
                 break
             count = len(users)
-            print("正在保存第{0}-{1}条用户资料 ...".format(
+            print(u"正在保存第{0}-{1}条用户资料 ...".format(
                 self.user_total, self.user_total+count))
             self.db.bulk_insert_user(users)
             self.user_total += count
@@ -188,28 +188,28 @@ class Backup(object):
         if photo:
             url = photo['largeurl']
             img_dir = os.path.join(
-                self.output, '{0}-photos'.format(self.target_id))
+                self.output, u'{0}-photos'.format(self.target_id))
             if not os.path.exists(img_dir):
                 os.mkdir(img_dir)
-            img_name = '{0}.{1}'.format(status_id, url[-3:] or 'jpg')
+            img_name = u'{0}.{1}'.format(status_id, url[-3:] or 'jpg')
             filename = os.path.join(img_dir, img_name)
             if os.path.exists(filename):
-                print('照片已存在 {0}'.format(img_name))
+                print(u'照片已存在 {0}'.format(img_name))
             else:
-                print('正在下载照片 {0}'.format(img_name))
+                print(u'正在下载照片 {0}'.format(img_name))
                 utils.download_and_save(url, filename)
 
     def _fetch_photos_multi(self):
         rows = self.db.get_photo_status()
         if not rows:
-            print('{0}的相册里没有照片'.format(self.target_id))
+            print(u'{0}的相册里没有照片'.format(self.target_id))
             return
         photos = []
         for row in rows:
             photos.append(json.loads(row['data']))
 
         count = len(photos)
-        print("正在下载第{0}-{1}张照片 ...".format(
+        print(u"正在下载第{0}-{1}张照片 ...".format(
             self.photo_total, self.photo_total+count))
         pool = ThreadPool(8)
         try:
@@ -223,13 +223,13 @@ class Backup(object):
     def _fetch_photos(self):
         rows = self.db.get_photo_status()
         if not rows:
-            print('{0}的相册里没有照片'.format(self.target_id))
+            print(u'{0}的相册里没有照片'.format(self.target_id))
             return
         photos = []
         for row in rows:
             photos.append(json.loads(row['data']))
         count = len(photos)
-        print("正在下载第{0}-{1}张照片 ...".format(
+        print(u"正在下载第{0}-{1}张照片 ...".format(
             self.photo_total, self.photo_total+count))
         for photo in photos:
             if self.cancelled:
@@ -249,7 +249,7 @@ class Backup(object):
                 break
             tail_status = timeline[-1]
             count = len(timeline)
-            print("正在下载第{0}-{1}张照片 ...".format(
+            print(u"正在下载第{0}-{1}张照片 ...".format(
                 self.photo_total, self.photo_total+count))
             for status in timeline:
                 if self.cancelled:
@@ -279,7 +279,7 @@ class Backup(object):
                     error = e
                     print(e)
                     timeline = None
-                    print('网络连接超时，即将尝试第{0}重试...'.format(retry+1))
+                    print(u'网络连接超时，即将尝试第{0}重试...'.format(retry+1))
                     time.sleep(retry*5)
                     retry += 1
             if error:
@@ -287,7 +287,7 @@ class Backup(object):
             if not timeline:
                 break
             count = len(timeline)
-            print("正在保存第{0}-{1}条消息，共{2}条 ...".format(
+            print(u"正在保存第{0}-{1}条消息，共{2}条 ...".format(
                 self.total, self.total+count,
                 self.target_user['statuses_count']))
             self.db.bulk_insert_status(timeline)
@@ -312,7 +312,7 @@ class Backup(object):
                     error = e
                     print(e)
                     timeline = None
-                    print('网络连接超时，即将尝试第{0}重试...'.format(retry+1))
+                    print(u'网络连接超时，即将尝试第{0}重试...'.format(retry+1))
                     time.sleep(retry*5)
                     retry += 1
             if error:
@@ -320,7 +320,7 @@ class Backup(object):
             if not timeline:
                 break
             count = len(timeline)
-            print("正在保存第{0}-{1}条消息，共{2}条 ...".format(
+            print(u"正在保存第{0}-{1}条消息，共{2}条 ...".format(
                 self.total, self.total+count,
                 self.target_user['statuses_count']))
             self.db.bulk_insert_status(timeline)
