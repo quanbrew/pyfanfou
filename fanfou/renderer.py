@@ -23,7 +23,7 @@ def _render_status_html(it, out, outDir):
     time = utils.get_only_fanfou_date(raw_time).decode('utf8')
     text = it['text']
     if it.get('photo'):
-        imgfile = os.path.join('{0}-photos'.format(uid), '{0}.jpg'.format(id))
+        imgfile = os.path.join(u'{0}-photos'.format(uid), u'{0}.jpg'.format(id))
         imgpath = os.path.join(outDir, imgfile)
         photo = imgfile if os.path.exists(imgpath) else it['photo']['url']
     else:
